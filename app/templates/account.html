@@ -1,1 +1,156 @@
 <!DOCTYPE html>
+<html>
+<head>
+    <title>Account</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accounts.css') }}">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+            </ul>
+            <h1 class="page-header">BankDom</h1>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('logout') }}">Log out</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section class="info-card">
+        <div class="left">
+            <h1>Left</h1>
+        </div>
+        <div class="middle">
+            <h1>Hello, {{ userName }}</h1>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in accounts %}
+                        <tr onclick="sendAccountNum('{{ account[2] }}')">
+                            <td>{{ account[0] }}</td>
+                            <td>${{ account[1] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a class="btn btn-primary" href="{{ url_for('create_account') }}">Create Account</a>
+        </div>
+        <div class="right">
+            <div class="Deposit">
+                <button type="button" class="btn btn-primary" id="deposit" onclick="showDepForm()">Deposit</button>
+                <form id="deposit-form" class="form" action="{{ url_for('deposit') }}" method="POST" style="display: none;">
+                    <label for="amount">Enter Amount:</label>
+                    <input type="number" id="amount" name="amount" step="0.01" min="0">
+                    <div class="input-container">
+                        <label for="accountType">Choose an account: </label>
+                        <select name="account_number">
+                            {% for account in accounts %}
+                            <option value="{{ account[2] }}">{{ account[0] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Deposit</button>
+                </form>
+            </div>
+            <div class="transfer">
+                <button type="button" class="btn btn-primary" id="transfer" onclick="showTransForm()">Send</button>
+                <form id="transfer-form" class="form" action="{{ url_for('transfer') }}" method="POST" style="display: none;">
+                    <input type="number" class="amount" name="amount" step="0.01" min="0" placeholder="Amount" required>
+                    <input type="text" class="accountNumber" name="account_number" step="0.01" min="0" placeholder="Account Number" required>
+                    <div class="input-container">
+                        <label for="accountType">Choose an account: </label>
+                        <select name="selected_account">
+                            {% for account in accounts %}
+                            <option value="{{ account[2] }}">{{ account[0] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="transferButton">Transfer</button>
+                </form>
+            </div>            
+        </div>
+    </section> 
+    <footer>
+        &copy; {{ 2024 }} bankDom Bank System
+    </footer>
+    <script>
+        function showDepForm() {
+            var depositForm = document.getElementById("deposit-form");
+            var transferForm = document.getElementById("transfer-form");
+            var depositButton = document.getElementById("deposit");
+            var transferButton = document.getElementById("transfer");
+    
+            if (depositForm.style.display === "none") {
+                depositForm.style.display = "inline-block"; 
+                depositButton.innerText = "Cancel";
+                transferForm.style.display = "none";
+                transferButton.style.display = "none";  // hide transfer button when deposit form is shown
+            } else {
+                depositForm.style.display = "none";
+                transferButton.style.display = "inline-block";  // show transfer button when deposit form is hidden
+                depositButton.innerText = "Deposit";
+            }
+        }
+    
+        function showTransForm() {
+            var depositForm = document.getElementById("deposit-form");
+            var transferForm = document.getElementById("transfer-form");
+            var depositButton = document.getElementById("deposit");
+            var transferButton = document.getElementById("transfer");
+    
+            if (transferForm.style.display === "none") {
+                transferForm.style.display = "inline-block";
+                depositForm.style.display = "none";
+                depositButton.style.display = "none";  // hide deposit button when transfer form is shown
+                transferButton.innerText = "Cancel";
+            } else {
+                transferForm.style.display = "none";
+                depositButton.style.display = "inline-block";  // show deposit button when transfer form is hidden
+                transferButton.innerText = "Transfer";
+            }
+        }
+
+        function sendAccountNum(num) {
+            // Create a FormData object to store the form data
+            var formData = new FormData();
+            // Append the account number to the form data
+            formData.append('account_num', num);
+
+            // Create an XMLHttpRequest object
+            var xhr = new XMLHttpRequest();
+            // Open a POST request to the Flask route
+            xhr.open('POST', '/account/transactions', true);
+
+            // Set up onload handler to handle response
+            xhr.onload = function () {
+                // Check if the request was successful
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    // Handle successful response
+                    var transactionsHtml = xhr.responseText;
+                    // Update the current page with the transactions HTML
+                    document.body.innerHTML = transactionsHtml;
+                } else {
+                    // Handle error
+                    console.error('Request failed with status:', xhr.status);
+                }
+            };
+
+            // Set up onerror handler to handle errors
+            xhr.onerror = function () {
+                console.error('Request failed');
+            };
+
+            // Send the form data
+            xhr.send(formData);
+        }
+        
+    </script>
+     
+</body>
+</html>
